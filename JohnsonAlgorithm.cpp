@@ -6,6 +6,10 @@ using namespace std;
 
 int JohnsonAlgo(double**, int, int, int*);
 void get_min(double**, int*, int, int);
+int check_condition(double**, int, int);
+double** transform(double**, int, int, int);
+double get_min1d(double*, int);
+double get_max1d(double*, int);
 
 int main() {
 
@@ -71,15 +75,43 @@ int main() {
 
 int JohnsonAlgo(double** pij, int njobs, int nmachines, int* schedule){
 
-	if (nmachines != 2)
-	{
-		cout << "FATAL ERROR! nmachines to Johnson Algo != 2. \n";
-		return -1;
-	}
-
 	int first_avail, last_avail;
 	int i, j, m;
 	int unscheduled_jobs = njobs;
+
+	if (nmachines != 2)
+	{
+		if (nmachines == 3)
+		{
+			int flag;
+			int i;
+			flag = check_condition(pij, njobs, nmachines);
+			if (flag == 0)
+			{
+				cout << "nmachines = 3; Johnson's algo will give optimal solution\n";
+				double** pij_new = new double* [njobs];
+				for (i = 0; i < njobs; i++)
+				{
+					pij_new[i] = new double[2];
+				}
+				pij_new = transform(pij, njobs, nmachines, 2);
+				return JohnsonAlgo(pij_new, njobs, 2, schedule);
+			}
+			else if(flag == -1)
+			{
+				cout << "nmachines = 3;The condition is not satisfied! Johnson's algo maynot solve to optimality\n";
+				return -1;
+			}
+			else
+			{
+				return -2;
+			}
+		}
+		cout << "FATAL ERROR! nmachines to Johnson Algo != 2,3. \n";
+		return -3;
+	}
+
+	
 
 	first_avail = 0;
 	last_avail = njobs - 1;
@@ -112,7 +144,7 @@ int JohnsonAlgo(double** pij, int njobs, int nmachines, int* schedule){
 void get_min(double** pij, int* d, int njobs, int nmachines) {
 
 	int i, j;
-	float m;
+	double m;
 	i = 0;
 	j = 0;
 	m = 10000.0;
@@ -140,4 +172,103 @@ void get_min(double** pij, int* d, int njobs, int nmachines) {
 
 	return;
 
+}
+
+int check_condition(double** pij, int njobs, int nmachines) {
+
+	if (nmachines != 3)
+	{
+		cout << "nmachines!=3; Please check input to check_condition\n";
+		return -2;
+	}
+
+	int i, j;
+	double m[3];
+
+	double* pj = new double[njobs];
+
+	for (j = 0; j < nmachines; j++)
+	{
+		for (i = 0; i < njobs; i++)
+		{
+			pj[i] = pij[i][j];
+		}
+		if (j != 1)
+		{
+			m[j] = get_min1d(pj, njobs);
+		}
+		else
+		{
+			m[j] = get_max1d(pj, njobs);
+		}
+	}
+
+	if (m[0] >= m[1] || m[2] >= m[1])
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
+
+}
+
+double get_min1d(double* pj, int njobs) {
+	int i;
+	double m;
+
+	m = pj[0];
+
+	for (i = 0; i < njobs; i++)
+	{
+		if (m > pj[i])
+		{
+			m = pj[i];
+		}
+	}
+	return m;
+}
+
+double get_max1d(double* pj, int njobs) {
+	int i;
+	double m;
+
+	m = pj[0];
+
+	for (i = 0; i < njobs; i++)
+	{
+		if (m < pj[i])
+		{
+			m = pj[i];
+		}
+	}
+	return m;
+}
+
+double** transform(double** pij, int njobs, int nmachines, int together) {
+
+	int i, j, k;
+	double s1, s2;
+
+	double** pij_new = new double*[njobs];
+	for (i = 0; i < njobs; i++)
+	{
+		pij_new[i] = new double[2];
+	}
+
+	for (i = 0; i < njobs; i++)
+	{
+		s1 = 0.0;
+		s2 = 0.0;
+		for ( j = 0; j < together; j++)
+		{
+			s1 = s1 + pij[i][j];
+			s2 = s2 + pij[i][nmachines - j];
+		}
+		pij_new[i][0] = s1;
+		pij_new[i][1] = s2;
+	}
+
+	return pij_new;
 }
