@@ -10,6 +10,7 @@ int check_condition(double**, int, int);
 double** transform(double**, int, int, int);
 double get_min1d(double*, int);
 double get_max1d(double*, int);
+double simulate_schedule(double**, int*, int, int);
 
 int main() {
 
@@ -17,6 +18,7 @@ int main() {
 	string filename;
 	int njobs, nmachines;
 	int i, j, flag;
+	double m;
 	
 	
 	filename = "data.txt";
@@ -58,6 +60,10 @@ int main() {
 				cout << seq[i] << " ";
 			}
 			cout << "] \n";
+
+			m = simulate_schedule(pij, seq, njobs, nmachines);
+			cout << "The makespan is ";
+			cout << m;
 		}
 		delete[] pij;
 		delete[] seq;
@@ -71,7 +77,6 @@ int main() {
 	return 0;
 
 }
-
 
 int JohnsonAlgo(double** pij, int njobs, int nmachines, int* schedule){
 
@@ -138,8 +143,6 @@ int JohnsonAlgo(double** pij, int njobs, int nmachines, int* schedule){
 	return 0;
 
 }
-
-
 
 void get_min(double** pij, int* d, int njobs, int nmachines) {
 
@@ -264,11 +267,48 @@ double** transform(double** pij, int njobs, int nmachines, int together) {
 		for ( j = 0; j < together; j++)
 		{
 			s1 = s1 + pij[i][j];
-			s2 = s2 + pij[i][nmachines - j];
+			s2 = s2 + pij[i][nmachines - 1 - j];
 		}
 		pij_new[i][0] = s1;
 		pij_new[i][1] = s2;
 	}
-
 	return pij_new;
+}
+
+double simulate_schedule(double** pij, int* seq, int njobs, int nmachines) {
+
+	double makespan;
+	int i, j;
+	double s;
+
+	double* prev_machine = new double[njobs];
+	double* this_machine = new double[njobs];
+	
+	s = 0.0;
+	for (i = 0; i < njobs; i++)
+	{
+		s = s + pij[seq[i]][0];
+		this_machine[i] = s;
+	}
+
+	for (j = 1; j < nmachines; j++)
+	{
+		prev_machine[0] = this_machine[0];
+		this_machine[0] = prev_machine[0] + pij[seq[0]][j];
+		for (i = 1; i < njobs; i++)
+		{
+			prev_machine[i] = this_machine[i];
+			if (prev_machine[i] + pij[seq[i]][j] >= this_machine[i - 1] + pij[seq[i]][j])
+				this_machine[i] = prev_machine[i] + pij[seq[i]][j];
+			else this_machine[i] = this_machine[i - 1] + pij[seq[i]][j];
+		}
+	}
+
+	makespan = this_machine[njobs - 1];
+
+	delete[] prev_machine;
+	delete[] this_machine;
+
+	return makespan;
+
 }
